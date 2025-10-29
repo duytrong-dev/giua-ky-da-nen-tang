@@ -6,7 +6,9 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "jsx": "react-jsx",
+    "types": ["expo-image-picker"]
   },
   "include": [
     "**/*.ts",

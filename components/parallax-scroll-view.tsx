@@ -1,32 +1,30 @@
+import { ThemedView } from '@/components/themed-view';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import type { PropsWithChildren, ReactElement } from 'react';
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedRef,
   useAnimatedStyle,
-  useScrollOffset,
+  useScrollViewOffset,
 } from 'react-native-reanimated';
-
-import { ThemedView } from '@/components/themed-view';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 const HEADER_HEIGHT = 250;
 
 type Props = PropsWithChildren<{
   headerImage: ReactElement;
   headerBackgroundColor: { dark: string; light: string };
+  style?: StyleProp<ViewStyle>
 }>;
 
-export default function ParallaxScrollView({
-  children,
-  headerImage,
-  headerBackgroundColor,
-}: Props) {
+function AnimatedParallax({ children, headerImage, headerBackgroundColor, style }: Props) {
   const backgroundColor = useThemeColor({}, 'background');
   const colorScheme = useColorScheme() ?? 'light';
+  
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
-  const scrollOffset = useScrollOffset(scrollRef);
+  const scrollOffset = useScrollViewOffset(scrollRef);
+  
   const headerAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -45,15 +43,13 @@ export default function ParallaxScrollView({
   });
 
   return (
-    <Animated.ScrollView
-      ref={scrollRef}
-      style={{ backgroundColor, flex: 1 }}
-      scrollEventThrottle={16}>
+    <Animated.ScrollView ref={scrollRef} style={{ backgroundColor, flex: 1 }} scrollEventThrottle={16}>
       <Animated.View
         style={[
           styles.header,
           { backgroundColor: headerBackgroundColor[colorScheme] },
           headerAnimatedStyle,
+          style
         ]}>
         {headerImage}
       </Animated.View>
@@ -61,6 +57,34 @@ export default function ParallaxScrollView({
     </Animated.ScrollView>
   );
 }
+
+function FallbackParallax({ children, headerImage, headerBackgroundColor }: Props) {
+  const backgroundColor = useThemeColor({}, 'background');
+  const colorScheme = useColorScheme() ?? 'light';
+  return (
+    <ScrollView style={{ backgroundColor, flex: 1 }} scrollEventThrottle={16}>
+      <View style={[styles.header, { backgroundColor: headerBackgroundColor[colorScheme] }]}>
+        {headerImage}
+      </View>
+      <ThemedView style={styles.content}>{children}</ThemedView>
+    </ScrollView>
+  );
+}
+
+// Try to determine if Reanimated is available and functional
+const isReanimatedAvailable = () => {
+  try {
+    return Animated !== undefined && 
+           interpolate !== undefined && 
+           useAnimatedRef !== undefined && 
+           useAnimatedStyle !== undefined;
+  } catch {
+    return false;
+  }
+};
+
+const ParallaxScrollView = isReanimatedAvailable() ? AnimatedParallax : FallbackParallax;
+export default ParallaxScrollView;
 
 const styles = StyleSheet.create({
   container: {
@@ -72,7 +96,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 32,
+    padding: 0,
     gap: 16,
     overflow: 'hidden',
   },

@@ -4,9 +4,11 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AuthProvider } from '@/store/AuthContext';
+import { ToastProvider } from '@/store/ToastContext';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: '(root)',
 };
 
 export default function RootLayout() {
@@ -14,11 +16,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
+      <ToastProvider>
+        <AuthProvider>
+          <Stack>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(root)" options={{ headerShown: false }} />
+            <Stack.Screen name="users/[id]" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
